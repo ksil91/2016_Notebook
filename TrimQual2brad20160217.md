@@ -1,6 +1,6 @@
 ## Trimming and quality filtering Dec2015 2bRAD sequence data  
 I am roughly following [Eli Meyer's 2brad geneotyping guide](http://people.oregonstate.edu/~meyere/2bRAD_analysis2.0.html) with some scripts also taken [from Mikhail Matz's 2bRAD github](https://github.com/z0on/2bRAD_GATK). Most analyses were run on my department's single node, 24 processor high performance computer. For brevity I don't include the .sh scripts to submit the job to the HPC, just the commands that were run.  
-Raw sequencing files are found at http://owl.fish.washington.edu/nightingales/O_lurida/2bRAD_Dec15/
+Raw sequencing files are found at http://owl.fish.washington.edu/nightingales/O_lurida/2bRAD_Dec2015/
 ### Required scripts and programs  
 For these steps, you need: 
 - Bioperl
@@ -20,7 +20,7 @@ Ex:
 ```sh
 ./trim2bRAD.pl SS2-4A_TGACCA-GATCTCT_L001_R1_001.fastq ".{12}GCA.{6}TGC.{12}" "AGATCGGAA" >SS2-4A.tr0
 ```
-After running this, I changed some of the samples names that were incorrect on the original barcode sheet. Trimmed sequences with the correct names are in: http://owl.fish.washington.edu/wetgenes/2brad_201512_trim
+After running this, I changed some of the samples names that were incorrect on the original barcode sheet. Trimmed sequences with the correct names are in the 2brad_201512_trim folder at: http://owl.fish.washington.edu/wetgenes/
 ### Quality filtering
 ```sh
 for file in *.tr0; 
@@ -28,6 +28,6 @@ for file in *.tr0;
 done
 mv *q0.fastq qual_25_18/ 
 ```
-This is using the Meyer lab's quality filtering script to remove reads that have more than 18 bases with quality scores less than 25. I then moved the results into the folder qual_25_18 in wetgenes. Will check the number of reads retained per sample and then rerun at different cutoffs.
+This is using the Meyer lab's quality filtering script to remove reads that have more than 18 bases with quality scores less than 25. I then moved the results into the folder [qual_25_18](http://owl.fish.washington.edu/wetgenes/index.php?dir=2brad_201512_qual%2Fqual_25_18%2F) in wetgenes. Will check the number of reads retained per sample and then rerun at different cutoffs.
 
 
