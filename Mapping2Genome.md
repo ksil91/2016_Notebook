@@ -81,31 +81,4 @@ bowtie2 --no-unal --score-min L,16,1 --local -L 16 -x $REF -U $ffile -S ${ffile/
 ```
 The *.err files list the output of the mapping. It seems like most samples only had ~30% of the reads map to the genome. I suspect that is because we are missing some of the genome with these scaffolds.
 
-The Meyer's pipeline includes a script for fitering out reads that have adapter sequences in them, but it involves a program cross.match that is not simple to download and feels arbitrary in how it filters for adapters as it involves a scoring system and threshold. I decided to use the program [cutadapt]( https://cutadapt.readthedocs.org/en/stable/) as it is commonly used for adapter trimming/filtering, has lots of documentation, and is entirely open-source.  
-Previously trimmed and quality filtered reads (.q0) are found [here](owl.fish.washington.edu/wetgenes) in the **2brad_201512_qual** folder.
-```sh
-for file in *_q0.fastq;
-    do cutadapt -a AGATCG -m 34 --too-short-output ${file/_q0.fastq/toosh.fastq} -o ${file/_q0.fastq/ca.fastq} $file;
-done
-```
-This searches for the start of the 3' adapter sequence AGATCG in an error-tolerant way and then trims the adapter sequence and everything following it. It retains reads that are at least 34bp long in a ```ca.fastq``` file 
-and puts the rest in a file with the ```toosh.fastq``` suffix.  
-The summary from cutadapt for each file can be seen [here](http://owl.fish.washington.edu/wetgenes/2brad_201512_ca/ca_2brad_201512.out). Need to write something to grep the number of reads passing filter for each file and put in a .csv format. The output fastq files are found in the **2brad_201512_ca** folder in the wetgenes/ directory.  
-```
-$ head -n 
-This is cutadapt 1.9.1 with Python 2.7.6
-Command line parameters: -a AGATCG -m 34 --too-short-output HC1-10toosh.fastq -o HC1-10ca.fastq HC1-10_q0.fastq
-Trimming 1 adapter with at most 10.0% errors in single-end mode ...
-Finished in 17.18 s (14 us/read; 4.28 M reads/minute).
-=== Summary ===
-Total reads processed:               1,225,170
-Reads with adapters:                     5,583 (0.5%)
-Reads that were too short:               5,583 (0.5%)
-Reads written (passing filters):     1,219,587 (99.5%)
-Total basepairs processed:    44,106,120 bp
-Total written (filtered):     43,905,132 bp (99.5%)
-=== Adapter 1 ===
-Sequence: AGATCG; Type: regular 3'; Length: 6; Trimmed: 5583 times.
-No. of allowed errors:
-0-6 bp: 0
-Bases preceding removed adapters:
+
