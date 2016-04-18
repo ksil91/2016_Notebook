@@ -4,7 +4,8 @@ There were difficulties with the *de novo* assembly of the 2bRAD reads using the
 http://owl.fish.washington.edu/wetgenes/index.php?dir=subset_genotype%2F
 
 
-First I selected 20 individuals from each population that had at least 1 million sequencing reads, as well as a few technical repeats for each population.
+First I selected 20 individuals from each population that had at least 1 million sequencing reads, as well as a few technical repeats for each population.  
+
 |South Sound | Hood Canal | Fidalgo Bay |
 |------------| --------| --------------|
 |SS3-14      | HC2-17A | NF2-15 |
@@ -32,15 +33,15 @@ First I selected 20 individuals from each population that had at least 1 million
 |   |   | NF3-16 |
 
 
-
-   ### Required scripts and programs
+### Required scripts and programs
  For these steps you need:  
  -  [2bRAD_GATK](https://github.com/z0on/2bRAD_GATK/blob/master/) from Mikhail Matz's github
  -  bowtie2
  -  Picard Tools
  -  samtools
  -  vcftools
- ### Preparing reference  
+### Preparing reference
+
 For the reference I'm using scaffolds from the genome assembly by BGI that are over 10KB.
 http://de.iplantcollaborative.org/dl/d/5E084D53-E706-420E-AC7D-8620F6F0A535/OlyBGI-scaffold-10k.fa
 
@@ -60,7 +61,7 @@ bowtie2-build $GENOME_FASTA $GENOME_FASTA
 samtools faidx $GENOME_FASTA
 java -jar $PICARD CreateSequenceDictionary R=$GENOME_FASTA  O=$GENOME_DICT
 ```
- ### Mapping Reads 
+### Mapping Reads 
 I then wrote a script to automate the creation of job submission shell scripts for mapping reads from each sample to the reference. This creates .bt2.sam files for each sample.
 ```sh
 export REF=/home/ksilliman/CommonG/OlyBGI-scaffold-10k_ccn.fasta 
@@ -110,7 +111,7 @@ samtools sort NF3-16_unsorted.bam -f NF3-16_sorted.bam
 java -Xmx5g -jar /usr/local/picard/dist/picard.jar AddOrReplaceReadGroups INPUT=NF3-16_sorted.bam OUTPUT=NF3-16.bam RGID=group1 RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=NF3-16.m
 samtools index NF3-16.bam
 ```
- ### Running GATK
+### Running GATK
  
  First realign around indels. For each sample.bam file:
  ```sh
@@ -273,7 +274,7 @@ java -jar $GATK -T UnifiedGenotyper -R $GENOME_REF -nt 6 -nct 1  --genotype_like
 #rename sample names to get rid of .m
 cat round2.vcf | perl -pe 's/\.m//g' | perl -pe 's/^chrom/chr/' >round2.names.vcf
 ```
- ### Using Replicates to recalibrate genotype calls
+### Using Replicates to recalibrate genotype calls
 For these next steps I made a tab-delimited file listing the replicate pairs in the test set called testreps.tab. I tried to run GATK's variant quality score recalibration (VQSR), but it would not work- likely because there aren't enough variants in this test set. Here's the code I tried:
 ```sh
 ~/CommonG/z0on/replicatesMatch.pl vcf=round2.names.vcf replicates=testreps.tab > vqsr.vcf
