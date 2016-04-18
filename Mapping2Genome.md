@@ -32,12 +32,14 @@ First I selected 20 individuals from each population that had at least 1 million
 |   |   | NF3-16 |
 
 
- ### Required scripts and programs  
+
+   ### Required scripts and programs
  For these steps you need:  
- -  [concatFasta.pl](https://github.com/z0on/2bRAD_GATK/blob/master/concatFasta.pl) from Mikhail Matz's github
+ -  [2bRAD_GATK](https://github.com/z0on/2bRAD_GATK/blob/master/) from Mikhail Matz's github
  -  bowtie2
  -  Picard Tools
  -  samtools
+ -  vcftools
  ### Preparing reference  
 For the reference I'm using scaffolds from the genome assembly by BGI that are over 10KB.
 http://de.iplantcollaborative.org/dl/d/5E084D53-E706-420E-AC7D-8620F6F0A535/OlyBGI-scaffold-10k.fa
@@ -101,12 +103,182 @@ for ffile in *.bt2.sam; do
 
 done
 ```
+Key lines:
+```sh
+samtools view -bS NF3-16.bt2.sam > NF3-16_unsorted.bam
+samtools sort NF3-16_unsorted.bam -f NF3-16_sorted.bam
+java -Xmx5g -jar /usr/local/picard/dist/picard.jar AddOrReplaceReadGroups INPUT=NF3-16_sorted.bam OUTPUT=NF3-16.bam RGID=group1 RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=NF3-16.m
+samtools index NF3-16.bam
+```
+ ### Running GATK
+ 
+ First realign around indels. For each sample.bam file:
+ ```sh
+ export GENOME_REF=/home/ksilliman/CommonG/OlyBGI-scaffold-10k_ccn.fasta
+java -Xmx5g -jar /usr/local/GenomeAnalysisTK.jar -T RealignerTargetCreator -R /home/ksilliman/CommonG/OlyBGI-scaffold-10k_ccn.fasta -I sample.bam -o sample.intervals
 
-Tried VQSR:
+java -Xmx5g -jar /usr/local/GenomeAnalysisTK.jar -T IndelRealigner -R /home/ksilliman/CommonG/OlyBGI-scaffold-10k_ccn.fasta -targetIntervals sample.intervals -I sample.bam -o sample.real.bam -LOD 0.4
+ ```
+ Run UnifiedGenotyper for a first pass in order to get base quality recalibration:
+  ```sh
+java -jar $GATK -T UnifiedGenotyper -R $GENOME_REF -nt 4 -nct 1  \
+-I HC2-17A.real.bam \
+-I HC2-18.real.bam \
+-I HC3-1.real.bam \
+-I HC3-10.real.bam \
+-I HC3-11.real.bam \
+-I HC3-7.real.bam \
+-I HC2-17B.real.bam \
+-I HC1-4.real.bam \
+-I HC4-3.real.bam \
+-I HC3-4.real.bam \
+-I HC4-6.real.bam \
+-I HC5-12.real.bam \
+-I HC2-1.real.bam \
+-I HC4-9.real.bam \
+-I HC4-14.real.bam \
+-I HC4-4A.real.bam \
+-I HC4-4B.real.bam \
+-I HC1-17.real.bam \
+-I HC2-8.real.bam \
+-I HC5-10.real.bam \
+-I HC3-17.real.bam \
+-I HC2-14.real.bam \
+-I SS3-14.real.bam \
+-I SS3-15.real.bam \
+-I SS3-16.real.bam \
+-I SS3-3.real.bam \
+-I SS3-20.real.bam \
+-I SS2-14.real.bam \
+-I SS5-18.real.bam \
+-I SS5-7.real.bam \
+-I SS1-8.real.bam \
+-I SS2-15.real.bam \
+-I SS4-8.real.bam \
+-I SS3-2.real.bam \
+-I SS3-6.real.bam \
+-I SS2-12A.real.bam \
+-I SS2-12B.real.bam \
+-I SS2-4A.real.bam \
+-I SS2-4B.real.bam \
+-I SS3-21.real.bam \
+-I SS5-17.real.bam \
+-I SS4-13.real.bam \
+-I SS3-7.real.bam \
+-I SS2-13.real.bam \
+-I NF2-15.real.bam \
+-I NF5-19.real.bam \
+-I NF5-14.real.bam \
+-I NF2-12.real.bam \
+-I NF3-17.real.bam \
+-I NF1-8.real.bam \
+-I NF4-12.real.bam \
+-I NF2-6A.real.bam \
+-I NF2-6B.real.bam \
+-I NF2-6C.real.bam \
+-I NF1-14A.real.bam \
+-I NF1-14B.real.bam \
+-I NF5-3.real.bam \
+-I NF2-9.real.bam \
+-I NF3-11.real.bam \
+-I NF1-19.real.bam \
+-I NF4-13.real.bam \
+-I NF3-9.real.bam \
+-I NF4-9.real.bam \
+-I NF5-11.real.bam \
+-I NF4-11.real.bam \
+-I NF3-5.real.bam \
+-I NF3-16.real.bam \
+-o round1.vcf
+
+python ~/CommonG/z0on/GetHighQualVcfs.py -i round1.vcf --percentile 75 -o .
+ ```
+Base quality score recalibration (BQSR), for each sample:
+```sh
+java -Xmx20g -jar /usr/local/GenomeAnalysisTK.jar -T BaseRecalibrator -R /home/ksilliman/CommonG/OlyBGI-scaffold-10k_ccn.fasta -knownSites sample.m_HQ.vcf -I sample.real.bam -o sample.recalibration_report.grp
+java -Xmx10g -jar /usr/local/GenomeAnalysisTK.jar -T PrintReads -R /home/ksilliman/CommonG/OlyBGI-scaffold-10k_ccn.fasta  -I sample.bam -BQSR sample.recalibration_report.grp -o sample.recal.bam
+```
+2nd iteration of UnifiedGenotyper on quality-recalibrated files:
+```sh
+java -jar $GATK -T UnifiedGenotyper -R $GENOME_REF -nt 6 -nct 1  --genotype_likelihoods_model SNP \
+-I HC2-17A.recal.bam \
+-I HC2-18.recal.bam \
+-I HC3-1.recal.bam \
+-I HC3-10.recal.bam \
+-I HC3-11.recal.bam \
+-I HC3-7.recal.bam \
+-I HC2-17B.recal.bam \
+-I HC1-4.recal.bam \
+-I HC4-3.recal.bam \
+-I HC3-4.recal.bam \
+-I HC4-6.recal.bam \
+-I HC5-12.recal.bam \
+-I HC2-1.recal.bam \
+-I HC4-9.recal.bam \
+-I HC4-14.recal.bam \
+-I HC4-4A.recal.bam \
+-I HC4-4B.recal.bam \
+-I HC1-17.recal.bam \
+-I HC2-8.recal.bam \
+-I HC5-10.recal.bam \
+-I HC3-17.recal.bam \
+-I HC2-14.recal.bam \
+-I SS3-14.recal.bam \
+-I SS3-15.recal.bam \
+-I SS3-16.recal.bam \
+-I SS3-3.recal.bam \
+-I SS3-20.recal.bam \
+-I SS2-14.recal.bam \
+-I SS5-18.recal.bam \
+-I SS5-7.recal.bam \
+-I SS1-8.recal.bam \
+-I SS2-15.recal.bam \
+-I SS4-8.recal.bam \
+-I SS3-2.recal.bam \
+-I SS3-6.recal.bam \
+-I SS2-12A.recal.bam \
+-I SS2-12B.recal.bam \
+-I SS2-4A.recal.bam \
+-I SS2-4B.recal.bam \
+-I SS3-21.recal.bam \
+-I SS5-17.recal.bam \
+-I SS4-13.recal.bam \
+-I SS3-7.recal.bam \
+-I SS2-13.recal.bam \
+-I NF2-15.recal.bam \
+-I NF5-19.recal.bam \
+-I NF5-14.recal.bam \
+-I NF2-12.recal.bam \
+-I NF3-17.recal.bam \
+-I NF1-8.recal.bam \
+-I NF4-12.recal.bam \
+-I NF2-6A.recal.bam \
+-I NF2-6B.recal.bam \
+-I NF2-6C.recal.bam \
+-I NF1-14A.recal.bam \
+-I NF1-14B.recal.bam \
+-I NF5-3.recal.bam \
+-I NF2-9.recal.bam \
+-I NF3-11.recal.bam \
+-I NF1-19.recal.bam \
+-I NF4-13.recal.bam \
+-I NF3-9.recal.bam \
+-I NF4-9.recal.bam \
+-I NF5-11.recal.bam \
+-I NF4-11.recal.bam \
+-I NF3-5.recal.bam \
+-I NF3-16.recal.bam \
+-o round2.vcf
+
+#rename sample names to get rid of .m
 cat round2.vcf | perl -pe 's/\.m//g' | perl -pe 's/^chrom/chr/' >round2.names.vcf
-
+```
+ ### Using Replicates to recalibrate genotype calls
+For these next steps I made a tab-delimited file listing the replicate pairs in the test set called testreps.tab. I tried to run GATK's variant quality score recalibration (VQSR), but it would not work- likely because there aren't enough variants in this test set. Here's the code I tried:
+```sh
 ~/CommonG/z0on/replicatesMatch.pl vcf=round2.names.vcf replicates=testreps.tab > vqsr.vcf
-
+```
+```
 7995 total SNPs
 1443 pass hets and match filters
 948 show non-reference alleles
@@ -114,7 +286,11 @@ cat round2.vcf | perl -pe 's/\.m//g' | perl -pe 's/^chrom/chr/' >round2.names.vc
 738 have matching heterozygotes in at least 0 replicate pair(s)
 317 polymorphic
 738 written
-
+```
+```sh
+vcftools --vcf vqsr.vcf --TsTv-summary
+```
+```
 VCFtools - 0.1.15
 (C) Adam Auton and Anthony Marcketta 2009
 
@@ -127,9 +303,25 @@ Outputting Ts/Tv summary
 Ts/Tv ratio: 1.463
 After filtering, kept 738 out of a possible 738 Sites
 Run Time = 0.00 seconds
+```
+```sh
+java -jar $GATK -T VariantRecalibrator -R $GENOME_REF -input round2.names.vcf -nt 6 \
+-resource:repmatch,known=true,training=true,truth=true,prior=10  vqsr.vcf \
+-an QD -an MQ -an FS -mode SNP --maxGaussians 4 \
+--target_titv 1.463 -tranche 85.0 -tranche 90.0 -tranche 95.0 -tranche 99.0 -tranche 100 \
+-recalFile round2.recal -tranchesFile recalibrate_SNP.tranches --rscript_file recalibrate_SNP_plots.R 
+```
+Here's where it would throw an error:
+```
+##### ERROR MESSAGE: NaN LOD value assigned. Clustering with this few variants and these annotations is unsafe. Please consider raising the number of variants used to train the negative model (via --minNumBadVariants 5000, for example).
+##### ERROR ------------------------------------------------------------------------------------------
 
-vqsr matz:
+```
+So instead I used Matz's non-parametric quantile-based recalibration scripts.
+```sh
 ~/CommonG/z0on/replicatesMatch.pl vcf=round2.names.vcf replicates=testreps.tab polyonly=1 > vqsr_matz.vcf
+```
+```
 7995 total SNPs
 1443 pass hets and match filters
 948 show non-reference alleles
@@ -137,7 +329,12 @@ vqsr matz:
 738 have matching heterozygotes in at least 0 replicate pair(s)
 317 polymorphic
 317 written
-
+```
+To choose a filtering setting for later, you want the setting with the greatest "gain". After trying the different settings, I chose the one below and a filter of 5:
+```sh
+recalibrateSNPs_gatk.pl vcf=round2.names.vcf true=vqsr_matz.vcf -nofs >gatk_after_vqsr_matz.vcf
+```
+```
 MQ quantiles:
 1	8.52
 5	14.45
@@ -195,91 +392,65 @@ QD quantiles:
 90	2.07	
 
 JOINT quantiles:
-1	0.00030
-5	0.00225
-10	0.00500
-15	0.00675
-20	0.00840
-30	0.01500
-40	0.02520
-50	0.03840
-60	0.06750
-70	0.10800
-80	0.16000
-90	0.33600
+1	0.00100
+5	0.00750
+10	0.01500
+15	0.02250
+20	0.02700
+30	0.04200
+40	0.06400
+50	0.09000
+60	0.12000
+70	0.16800
+80	0.25200
+90	0.40000
 
 ------------------------
-20.61%	at qual <1 (19.61% gain)
-58.16%	at qual <5 (53.16% gain)
-67.35%	at qual <10 (57.35% gain)
-69.86%	at qual <15 (54.86% gain)
-71.32%	at qual <20 (51.32% gain)
-75.75%	at qual <30 (45.75% gain)
-
--nofs
 43.04%	at qual <1 (42.04% gain)
 66.62%	at qual <5 (61.62% gain)
 71.14%	at qual <10 (61.14% gain)
 74.11%	at qual <15 (59.11% gain)
 75.85%	at qual <20 (55.85% gain)
 79.71%	at qual <30 (49.71% gain)
-
--nomq
 ------------------------
-7.93%	at qual <1 (6.93% gain)
-43.30%	at qual <5 (38.30% gain)
-57.37%	at qual <10 (47.37% gain)
-58.21%	at qual <15 (43.21% gain)
-60.53%	at qual <20 (40.53% gain)
-69.22%	at qual <30 (39.22% gain)
-------------------------
--nodp
-------------------------
-5.70%	at qual <1 (4.70% gain)
-21.50%	at qual <5 (16.50% gain)
-31.09%	at qual <10 (21.09% gain)
-38.77%	at qual <15 (23.77% gain)
-43.49%	at qual <20 (23.49% gain)
-56.27%	at qual <30 (26.27% gain)
-------------------------
--noqd
-------------------------
-18.15%	at qual <1 (17.15% gain)
-45.03%	at qual <5 (40.03% gain)
-58.30%	at qual <10 (48.30% gain)
-59.10%	at qual <15 (44.10% gain)
-63.61%	at qual <20 (43.61% gain)
-68.49%	at qual <30 (38.49% gain)
-------------------------
-
-
+```
+```sh
 retabvcf.pl vcf=gatk_after_vqsr_matz.vcf tab=/home/ksilliman/CommonG/OlyBGI-scaffold-10k_cc.tab > retab.vcf
-
 # discarding loci with too many heterozygotes, which are likely lumped paralogs
 # (by default, fraction of heterozygotes should not exceed maxhet=0.75)
 # this step can also filter for the fraction of missing genotypes (default maxmiss=0.5)
 hetfilter.pl vcf=retab.vcf > hetfilt_def.vcf
+```
+```
 7995 total loci
 4351 dropped because fraction of missing genotypes exceeded 0.5
 134 dropped because fraction of heterozygotes exceeded 0.75
 3510 written
-
-thinning to 1 SNP per tag
-thinner.pl vcf=hetfilt.vcf > thin_def.vcf
+```
+Thinning to 1 SNP per tag, leaves SNP with highest minor allele frequency:
+```sh
+thinner.pl vcf=hetfilt_def.vcf > thin_def.vcf
+```
+```
 3510 total loci
 257 loci skipped because they were closer than 40
 1765 loci selected
+```
 
-# applying filter and selecting polymorphic biallelic loci genotyped in 80% or more individuals
-# for non parametric (GATK-based) recalibration: replace --minQ 15 in the following line
-# with the quantile of the highest "gain" as reported by recalibrateSNPs_gatk.pl
-vcftools --vcf thin_def.vcf --minQ 5 --max-missing 0.8  --min-alleles 2 --max-alleles 2 --recode --recode-INFO-all --out filt0
+Applying filter and selecting polymorphic biallelic loci genotyped in 70% or more individuals. --minQ is where you set filter established earlier.
+```sh
+vcftools --vcf thin_def.vcf --minQ 5 --max-missing 0.7  --min-alleles 2 --max-alleles 2 --recode --recode-INFO-all --out filt0
+```
+```
 After filtering, kept 67 out of 67 Individuals
 After filtering, kept 755 out of a possible 1765 Sites
+```
 
-# genotypic match between pairs of replicates 
-# (the most important one is the last one, Heterozygote Discovery Rate)	
+Checking genotypic match between pairs of replicates
+```sh
 repMatchStats.pl vcf=filt0.recode.vcf replicates=testreps.tab 
+```
+```
 pair	gtyped	match	[ 00	01	11 ]	HetMatch	HomoHetMismatch	HetNoCall	HetsDiscoveryRate
 HC2-17A:HC2-17B	725	660(91.0%)	 [57%	18%	25% ]	119	53	2	0.81	
 HC4-4A:HC4-4B	722	672(93.1%)	 [54%	21%	25% ]	143	38	4	0.87	
@@ -295,16 +466,23 @@ hets called homos depth:
 lower 25%	11
 median		41
 upper 75%	116
-# creating final filtered file without clones (must list them in the file clones2remove):
-# (for non-parametric recalibration, replace --remove-filtered-all with --minQ [quantile of the highest gain] )
+```
+SS2-12A and SS2-12B had lo match so excluding these for now from further analyses. I created a file called testreps_del.tab listing which replicate to delete, based on which replicate had the most mapped reads.
+```sh
 vcftools --vcf thin_def.vcf --remove testreps_del.tab --minQ 5 --max-missing 0.7  --min-alleles 2 --max-alleles 2 --recode --recode-INFO-all --out testfinal.7
+```
+```
 After filtering, kept 59 out of 67 Individuals
 Outputting VCF file...
 After filtering, kept 882 out of a possible 1765 Sites
-
-for Tajima's D
+```
+for Tajima's D calculation:
+```sh
 vcftools --vcf hetfilt_def.vcf --remove testreps_del.tab --minQ 5 --max-missing 0.7  --min-alleles 2 --max-alleles 2 --recode --recode-INFO-all --out testfinalUnthin.7
+```
+```
 After filtering, kept 1855 out of a possible 3510 Sites
+```
 
 
 
