@@ -351,6 +351,94 @@ $ ipyrad -p params-all_phylo_ostrea.txt -s 3
 | WA9\_9 | 3 | 1053470 | 896033 | 105074 | 25795 |
 | conch\_2 | 3 | 18425 | 14656 | 9829 | 168 |
 
+Less than 1000 clusters:  
+  * BC1_10 (rep)  
+  * BC2_3 (has rep)  
+  * BC3_13  
+  * BC3_2a (rep w/ 6000)  
+  * BC3_2b (rep w/6000)  
+  * BC4_1  
+  * BC4_13 (has rep)  
+  * BC4_3  
+  * CA1_16 (rep)  
+  * CA1_19 (has rep)  
+  * CA2_5  
+  * CA3_10  
+  * CA3_8  
+  * CA4_11  
+CA4_11w_6
+CA5_7 (rep)
+CA7_2 (rep)
+Conch_5
+OR1_7 (rep)
+OR1_8 (rep)
+OR2_11 (rep)
+OR2_12
+OR3_3 (rep)
+OR3_5 (reps)
+WA12_3
+WA13_10 
+WA1_11 (rep)
+WA1_2
+WA1_3 (rep)
+WA9_6
+Conch_2
+
+Less than 10000
+BC1_4
+BC1_9 (has rep)
+BC2_5
+BC3_15
+BC3_2w_6
+BC4_4 (has rep)
+CA1_10
+CA1_14
+CA1_20B_7 (has rep)
+CA2_4
+CA4_12B_7 (has rep)
+CA4_18
+CA4_19
+CA5_10B (reps)
+CA5_13a (reps)
+CA5_7 (rep)
+CA6_14 (rep)
+CA6_7
+CA7_1
+CA7_15 (rep)
+CA7_16
+CA7_1w_7
+CA7_6
+Conch_11
+Conch_23
+Conch_7
+Conch_8
+OR1_6
+OR2_1 (rep)
+OR2_13
+OR2_15
+OR2_6
+OR3_12
+WA10_1 (rep)
+WA10_11 (rep)
+WA10_13
+WA10_14 (rep)
+WA11_1
+WA11_9 (rep)
+WA12_2 (rep)
+WA12_22
+WA13_10w_7
+WA13_12
+WA13_4
+WA13_4w_6
+WA13_7
+WA13_8
+WA1_9
+
+missing:
+WA10_5
+OR2_2
+WA12_4b
+
 Branching to create subset including 78 individuals with fewer than 10000 clusters after filtering for depth:
 ```sh
 $ ipyrad -p params-all_phylo_ostrea.txt -b less10ksubset allphylo_exclude_less10000
