@@ -366,10 +366,10 @@ Less than 1000 clusters:
   * CA3_10  
   * CA3_8  
   * CA4_11  
-CA4_11w_6
-CA5_7 (rep)
-CA7_2 (rep)
-Conch_5
+  * CA4_11w_6
+  * CA5_7 (rep)
+  * CA7_2 (rep)
+  * Conch_5
 OR1_7 (rep)
 OR1_8 (rep)
 OR2_11 (rep)
@@ -443,10 +443,43 @@ Branching to create subset including 78 individuals with fewer than 10000 cluste
 ```sh
 $ ipyrad -p params-all_phylo_ostrea.txt -b less10ksubset allphylo_exclude_less10000
 ```
-Branching to create subset of 229 individuals with over 10000 clusters:
+Branching to create subset of 229 individuals (17 reps) with over 10000 clusters:
 ```sh
 $ ipyrad -p params-all_phylo_ostrea.txt -b less10ksubset allphylo_exclude_over10k
 ```
 
 ipyrad -p params-over10ksubset.txt -s 456
+
+over10k-min90H57
+190 samples (90% of 229-17), 50% plus 7% reps
+
+over10k-min90H32
+190 samples, 50% plus 7% reps
+
+over10k-min75H32
+159 samples
+
+over10k-min75H57
+159 samples
+
+Comparing with denovo+reference
+```sh
+$ ipyrad -p params-all_phylo_ostrea.txt -b refv2-over10k allphylo_exclude_over10k 
+```
+Error:
+  Encountered an unexpected error (see ./ipyrad_log.txt)
+  Error message is below -------------------------------
+'Series' object has no attribute 'reads_passed_filter'
+
+Redoing steps 1 and 2...maybe due to update
+
+ipyrad -p params-all_phylo_ostrea.txt -s 12 -f
+
+ipyrad -p params-refv2-over10k.txt -s 3456 -f
+
+ipyrad -p params-over10kD9.txt -s 3456
+
+
+
+
 
