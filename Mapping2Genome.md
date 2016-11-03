@@ -35,7 +35,7 @@ First I selected 20 individuals from each population that had at least 1 million
 
 ### Required scripts and programs
  For these steps you need:  
- -  [2bRAD_GATK](https://github.com/z0on/2bRAD_GATK/blob/master/) from Mikhail Matz's github
+ -  [2bRAD_GATK](https://github.com/z0on/2bRAD_GATK/) from Mikhail Matz's github
  -  bowtie2
  -  Picard Tools
  -  samtools

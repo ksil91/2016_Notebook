@@ -1,4 +1,5 @@
-Notebook detailing iprad analysis of all samples sequenced for Olympia oyster phylogeophraphy project. Once documentation of the ipyrad API is up, I plan to make an ipython notebook.
+Notebook detailing iprad analysis of all samples sequenced for Olympia oyster phylogeophraphy project. 
+Once documentation of the ipyrad API is up, I plan to make an ipython notebook.
 
 I used data that had previously been demultiplexed with pyrad Step 1, but had not yet been filtered.
 
@@ -370,21 +371,21 @@ Less than 1000 clusters:
   * CA5_7 (rep)
   * CA7_2 (rep)
   * Conch_5
-OR1_7 (rep)
-OR1_8 (rep)
-OR2_11 (rep)
-OR2_12
-OR3_3 (rep)
-OR3_5 (reps)
-WA12_3
-WA13_10 
-WA1_11 (rep)
-WA1_2
-WA1_3 (rep)
-WA9_6
-Conch_2
+  * OR1_7 (rep)
+  * OR1_8 (rep)
+  * OR2_11 (rep)
+  * OR2_12
+  * OR3_3 (rep)
+  * OR3_5 (reps)
+  * WA12_3
+  * WA13_10 
+  * WA1_11 (rep)
+  * WA1_2
+  * WA1_3 (rep)
+  * WA9_6
+  * Conch_2
 
-Less than 10000
+Less than 10000  
 BC1_4
 BC1_9 (has rep)
 BC2_5
@@ -471,13 +472,32 @@ Error:
   Error message is below -------------------------------
 'Series' object has no attribute 'reads_passed_filter'
 
-Redoing steps 1 and 2...maybe due to update
+Redoing steps 1 and 2..this was due to an update with ipyrad.
 
 ipyrad -p params-all_phylo_ostrea.txt -s 12 -f
 
 ipyrad -p params-refv2-over10k.txt -s 3456 -f
 
 ipyrad -p params-over10kD9.txt -s 3456
+
+## ipyrad mapping
+
+Using Matz 2bRAD script:  
+
+For the reference I'm using scaffolds from the genome assembly by BGI that are over 10KB.
+http://de.iplantcollaborative.org/dl/d/5E084D53-E706-420E-AC7D-8620F6F0A535/OlyBGI-scaffold-10k.fa
+
+Concatenating scaffolds into small number of "pseudo-chromosomes":
+```sh
+concatFasta.pl fasta=Ostrea_lurida.scafSeq
+```
+Normalize fasta records to ensure all lines are of the same length, using Picard
+```sh
+java -Xmx1g -jar $PICARD NormalizeFasta INPUT=Ostrea_lurida_cc.fasta OUTPUT=Ostrea_lurida_v2_ccn.fasta
+```
+
+
+
 
 
 
