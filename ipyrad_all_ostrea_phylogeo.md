@@ -480,6 +480,8 @@ ipyrad -p params-refv2-over10k.txt -s 3456 -f
 
 ipyrad -p params-over10kD9.txt -s 3456
 
+exRun1L: 218 samples
+
 ## ipyrad mapping
 
 Using Matz 2bRAD script:  
