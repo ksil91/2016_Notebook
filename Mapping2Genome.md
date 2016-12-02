@@ -1,7 +1,7 @@
 # Mapping Subset of 2bRAD Samples to Genome
 
 There were difficulties with the *de novo* assembly of the 2bRAD reads using the Meyer lab scripts, but now we have a draft *O. lurida* genome and so don't need to *de novo* assemble the 2bRAD loci. I am mostly following the [Matz lab's protocol for genotyping with GATK](https://github.com/z0on/2bRAD_GATK) as it includes steps for using recalibrating variant quality scores using technical replicates. We have 2 technical replicates within each library and 3 individuals that were sequenced across all 4 libraries. I had to adapt their scripts in a few places as they were written around job submission to their university's cluster. Most analyses were run on my department's single node, 24 processor high performance computer. For brevity I don't include the .sh scripts to submit the job to the HPC, just the commands that were run. All of the input and output files can be found at: 
-http://owl.fish.washington.edu/wetgenes/index.php?dir=subset_genotype%2F
+http://owl.fish.washington.edu/wetgenes/subset_genotype/
 
 
 First I selected 20 individuals from each population that had at least 1 million sequencing reads, as well as a few technical repeats for each population.  
@@ -415,6 +415,7 @@ JOINT quantiles:
 79.71%	at qual <30 (49.71% gain)
 ------------------------
 ```
+Discarded loci where 75% or greater of the samples were heterozygous and missing in over 50% of samples. File called hetfilt_def.vcf:  
 ```sh
 retabvcf.pl vcf=gatk_after_vqsr_matz.vcf tab=/home/ksilliman/CommonG/OlyBGI-scaffold-10k_cc.tab > retab.vcf
 # discarding loci with too many heterozygotes, which are likely lumped paralogs
@@ -428,7 +429,7 @@ hetfilter.pl vcf=retab.vcf > hetfilt_def.vcf
 134 dropped because fraction of heterozygotes exceeded 0.75
 3510 written
 ```
-Thinning to 1 SNP per tag, leaves SNP with highest minor allele frequency:
+Thinning to 1 SNP per tag, leaves SNP with highest minor allele frequency, file called thin_def.vcf.
 ```sh
 thinner.pl vcf=hetfilt_def.vcf > thin_def.vcf
 ```
@@ -468,7 +469,7 @@ lower 25%	11
 median		41
 upper 75%	116
 ```
-SS2-12A and SS2-12B had lo match so excluding these for now from further analyses. I created a file called testreps_del.tab listing which replicate to delete, based on which replicate had the most mapped reads.
+SS2-12A and SS2-12B had few matches so excluding these for now from further analyses. I created a file called testreps_del.tab listing which replicate to delete, based on which replicate had the most mapped reads. Final output file to be used in further analyses: testfinal.7.recode.vcf  
 ```sh
 vcftools --vcf thin_def.vcf --remove testreps_del.tab --minQ 5 --max-missing 0.7  --min-alleles 2 --max-alleles 2 --recode --recode-INFO-all --out testfinal.7
 ```
