@@ -484,11 +484,6 @@ exRun1L: 218 samples
 
 ## ipyrad mapping
 
-Using Matz 2bRAD script:  
-
-For the reference I'm using scaffolds from the genome assembly by BGI that are over 10KB.
-http://de.iplantcollaborative.org/dl/d/5E084D53-E706-420E-AC7D-8620F6F0A535/OlyBGI-scaffold-10k.fa
-
 Concatenating scaffolds into small number of "pseudo-chromosomes":
 ```sh
 concatFasta.pl fasta=Ostrea_lurida.scafSeq
